@@ -2,14 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Kate Surfing Game</title>
     <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: lightblue;
+            height: 100vh;
+            width: 100vw;
+        }
+
         canvas {
             display: block;
-            margin: 0 auto;
             background-color: lightblue;
         }
+
+        #rotateMessage {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: red;
+            text-align: center;
+        }
+
         #jumpButton {
             position: fixed;
             bottom: 20px;
@@ -29,17 +52,37 @@
 
 <canvas id="gameCanvas"></canvas>
 <button id="jumpButton">Jump</button>
+<div id="rotateMessage">Please rotate your device to play the game.</div>
 
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
+    const rotateMessage = document.getElementById("rotateMessage");
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    // Function to adjust canvas size for mobile screens and orientation
+    function adjustCanvasSize() {
+        if (window.innerHeight > window.innerWidth) {
+            rotateMessage.style.display = "block";
+            canvas.style.display = "none";
+            document.getElementById("jumpButton").style.display = "none";
+        } else {
+            rotateMessage.style.display = "none";
+            canvas.style.display = "block";
+            document.getElementById("jumpButton").style.display = "block";
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+    }
 
-    // דמות גולש ופרטים
+    // Initial call to adjust canvas size
+    adjustCanvasSize();
+
+    // Add event listener for orientation change or window resize
+    window.addEventListener("resize", adjustCanvasSize);
+
     const surferImage = new Image();
     surferImage.src = 'surfer_with_surfboard.png';
+
     let kate = {
         x: 50,
         y: canvas.height - 80,
@@ -47,21 +90,20 @@
         height: 80,
         dy: 0,
         gravity: 0.4,
-        isJumping: false
+        isJumping: false,
+        jumpCount: 0,
+        maxJumpCount: 60  // מספר ה05צות המקסימלי (למשל 3 קפיצות)
     };
 
-    // מערך של 10 סוגי דגים בתצורת PNG
     const fishImages = [
         'fish1.png', 'fish2.png', 'fish3.png', 'fish4.png', 'fish5.png',
         'fish6.png', 'fish7.png', 'fish8.png', 'fish9.png', 'fish10.png'
     ];
 
-    // תמונת לובסטר וצליל לניקוד
     const lobsterImage = new Image();
     lobsterImage.src = 'lobster_image.png';
     const lobsterSound = new Audio('lobster_sound.mp3');
 
-    // פונקציה לבחירת תמונה רנדומלית לדג
     function getRandomFishImage() {
         const randomIndex = Math.floor(Math.random() * fishImages.length);
         const fishImage = new Image();
@@ -69,7 +111,6 @@
         return fishImage;
     }
 
-    // משתנה לניקוד ומכשולים
     let score = 0;
     let obstacles = [];
     let frameCount = 0;
@@ -77,19 +118,18 @@
     let obstacleSpeed = 3;
     let gameStarted = false;
 
-    // כפתור קפיצה
     const jumpButton = document.getElementById("jumpButton");
     jumpButton.addEventListener("mousedown", () => startJump());
 
     function startJump() {
         if (!gameStarted) gameStarted = true;
-        if (!kate.isJumping) {
-            kate.dy = -10;
+        if (kate.jumpCount < kate.maxJumpCount) {
+            kate.dy = -12;  // כיוון כלפי מעלה
             kate.isJumping = true;
+            kate.jumpCount++;
         }
     }
 
-    // יצירת מכשול רנדומלי עם דג רנדומלי או לובסטר
     function spawnObstacle() {
         let isLobster = Math.random() < 0.1;
         let randomY = Math.random() * (canvas.height - 60);
@@ -114,6 +154,7 @@
             kate.y = canvas.height - kate.height;
             kate.dy = 0;
             kate.isJumping = false;
+            kate.jumpCount = 0;  // אפס את מספר הקפיצות כאשר הגולש נוגע בקרקע
         }
     }
 
@@ -126,7 +167,6 @@
         });
     }
 
-    // זיהוי מגע עם דגים או לובסטרים
     function checkCollision() {
         obstacles.forEach(obstacle => {
             const padding = 20;
@@ -138,12 +178,10 @@
 
             if (isCollision) {
                 if (obstacle.isLobster) {
-                    // נוגע בלובסטר – העלאת ניקוד
                     score++;
                     lobsterSound.play();
-                    obstacles = obstacles.filter(o => o !== obstacle); // הסרת הלובסטר מהמסך
+                    obstacles = obstacles.filter(o => o !== obstacle);
                 } else {
-                    // נוגע בדג – הפסד במשחק
                     alert("Game Over! Refresh to try again.");
                     resetGame();
                 }
@@ -158,6 +196,7 @@
         frameCount = 0;
         score = 0;
         gameStarted = false;
+        kate.jumpCount = 0;  // אפס את מספר הקפיצות כאשר המשחק מתאפס
     }
 
     function draw() {
