@@ -218,8 +218,23 @@
     }
   }
 
+  function openFullscreen() {
+    if (canvas.requestFullscreen) {
+      canvas.requestFullscreen();
+    } else if (canvas.mozRequestFullScreen) { // Firefox
+      canvas.mozRequestFullScreen();
+    } else if (canvas.webkitRequestFullscreen) { // Chrome, Safari and Opera
+      canvas.webkitRequestFullscreen();
+    } else if (canvas.msRequestFullscreen) { // IE/Edge
+      canvas.msRequestFullscreen();
+    }
+  }
+
   window.addEventListener("resize", checkOrientation);
-  window.addEventListener("load", checkOrientation);
+  window.addEventListener("load", () => {
+    checkOrientation();
+    openFullscreen(); // כנס את המשחק למסך מלא
+  });
   checkOrientation();
   gameLoop();
 </script>
