@@ -89,10 +89,10 @@
         width: 80,
         height: 80,
         dy: 0,
-        gravity: 0.4,
+        gravity: 0.2, // הורד את הגרביטי ל-0.2 כדי שהגולש ירד לאט יותר
         isJumping: false,
         jumpCount: 0,
-        maxJumpCount: 60  // מספר ה05צות המקסימלי (למשל 3 קפיצות)
+        maxJumpCount: 3  // מספר הקפיצות המקסימלי (למשל 3 קפיצות)
     };
 
     const fishImages = [
@@ -115,7 +115,7 @@
     let obstacles = [];
     let frameCount = 0;
     let spawnRate = 150;
-    let obstacleSpeed = 3;
+    let obstacleSpeed = 2; // הורד את מהירות ההתקדמות של המכשולים ל-2
     let gameStarted = false;
 
     const jumpButton = document.getElementById("jumpButton");
