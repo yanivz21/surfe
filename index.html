@@ -11,8 +11,6 @@
     }
     #gameCanvas {
       background-color: #87CEEB;
-      width: 100vw;
-      height: 100vh;
       display: block;
     }
     #jumpButton {
@@ -29,41 +27,69 @@
       border-radius: 10px;
       cursor: pointer;
     }
+    #rotateNotice {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 24px;
+      display: none;
+    }
   </style>
 </head>
 <body>
 
 <canvas id="gameCanvas"></canvas>
 <button id="jumpButton">Jump</button>
+<div id="rotateNotice">Please rotate your device to landscape mode for the best experience!</div>
 
 <script>
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
   const jumpButton = document.getElementById('jumpButton');
+  const rotateNotice = document.getElementById('rotateNotice');
 
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    scaleGame();
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  window.addEventListener('load', resizeCanvas);
+
+  function scaleGame() {
+    let scale = Math.min(window.innerWidth / 800, window.innerHeight / 600);
+    kate.width = 160 * scale; // הגדלת גודל הגולש פי 2
+    kate.height = 160 * scale;
+    obstacleSpeed = 5 * scale;
+  }
 
   const surferImage = new Image();
-  surferImage.src = 'surfer_with_surfboard.png';  // תמונה משולבת של הגולש עם הגלשן
+  surferImage.src = 'surfer_with_surfboard.png';
 
   const fishImage = new Image();
-  fishImage.src = 'fish_image.png';  // תמונת הדג
+  fishImage.src = 'fish_image.png';
 
   const lobsterImage = new Image();
-  lobsterImage.src = 'lobster_image.png';  // תמונת הלובסטר
+  lobsterImage.src = 'lobster_image.png';
 
-  // בחירת צליל להשמעה בעת נגיעה בלובסטר
-  const lobsterSound = new Audio('lobster_sound.mp3');  // צליל לבחירה בעת נגיעה בלובסטר
+  const lobsterSound = new Audio('lobster_sound.mp3');
 
   let kate = {
     x: 50,
-    y: canvas.height - 300,
-    width: 80 * 3,
-    height: 80 * 3,
+    y: canvas.height - 200, // הנמכת הגולש לחלק התחתון של המסך
+    width: 160, // גודל הגולש פי 2
+    height: 160,
     dy: 0,
     gravity: 0.5,
-    jumpStrength: -15,
+    jumpStrength: -10,
     isJumping: false
   };
 
@@ -72,6 +98,7 @@
   let frameCount = 0;
   let gameStarted = false;
   let score = 0;
+  let obstacleSpeed = 5;
 
   jumpButton.addEventListener('mousedown', () => {
     if (!gameStarted) gameStarted = true;
@@ -86,14 +113,14 @@
   });
 
   function spawnObstacle() {
-    let isLobster = Math.random() < 0.1; // 10% סיכוי ללובסטר
+    let isLobster = Math.random() < 0.1;
     let randomY = Math.random() * (canvas.height - 60);
     obstacles.push({
       x: canvas.width,
       y: randomY,
-      width: 60,
-      height: 60,
-      dx: 5,
+      width: 40,
+      height: 40,
+      dx: obstacleSpeed,
       isLobster: isLobster
     });
   }
@@ -122,7 +149,7 @@
 
   function checkCollision() {
     obstacles.forEach(obstacle => {
-      const padding = 20; // ערך מוגדל כדי להקטין את אזור ההתנגשות עם הדגים
+      const padding = 20;
       const isCollision =
         kate.x + padding < obstacle.x + obstacle.width &&
         kate.x + kate.width - padding > obstacle.x &&
@@ -132,8 +159,8 @@
       if (isCollision) {
         if (obstacle.isLobster) {
           score++;
-          lobsterSound.play();  // הפעלת צליל בעת נגיעה בלובסטר
-          obstacles = obstacles.filter(o => o !== obstacle); // הסרת הלובסטר לאחר נגיעה
+          lobsterSound.play();
+          obstacles = obstacles.filter(o => o !== obstacle);
         } else {
           alert("Game Over! Refresh to try again.");
           resetGame();
@@ -144,7 +171,7 @@
 
   function resetGame() {
     obstacles = [];
-    kate.y = canvas.height - kate.height;
+    kate.y = canvas.height - kate.height; // החזרת הגולש לתחתית
     kate.dy = 0;
     frameCount = 0;
     score = 0;
@@ -154,7 +181,6 @@
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // תצוגת ניקוד
     ctx.fillStyle = "black";
     ctx.font = "24px Arial";
     ctx.fillText("Score: " + score, canvas.width / 2 - 50, 40);
@@ -184,6 +210,17 @@
     requestAnimationFrame(gameLoop);
   }
 
+  function checkOrientation() {
+    if (window.innerWidth < window.innerHeight) {
+      rotateNotice.style.display = "flex";
+    } else {
+      rotateNotice.style.display = "none";
+    }
+  }
+
+  window.addEventListener("resize", checkOrientation);
+  window.addEventListener("load", checkOrientation);
+  checkOrientation();
   gameLoop();
 </script>
 
