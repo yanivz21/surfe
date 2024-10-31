@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kate Surfing Game</title>
+  <style>
+    body, html {
+      margin: 0;
+      overflow: hidden;
+    }
+    #gameCanvas {
+      background-color: #87CEEB;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+    #jumpButton {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 50px;
+      background-color: red;
+      color: white;
+      font-size: 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="gameCanvas"></canvas>
+<button id="jumpButton">Jump</button>
+
+<script>
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const jumpButton = document.getElementById('jumpButton');
+
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const surferImage = new Image();
+  surferImage.src = 'surfer_with_surfboard.png';  // תמונה משולבת של הגולש עם הגלשן
+
+  const fishImage = new Image();
+  fishImage.src = 'fish_image.png';  // תמונת הדג
+
+  const lobsterImage = new Image();
+  lobsterImage.src = 'lobster_image.png';  // תמונת הלובסטר
+
+  // בחירת צליל להשמעה בעת נגיעה בלובסטר
+  const lobsterSound = new Audio('lobster_sound.mp3');  // צליל לבחירה בעת נגיעה בלובסטר
+
+  let kate = {
+    x: 50,
+    y: canvas.height - 300,
+    width: 80 * 3,
+    height: 80 * 3,
+    dy: 0,
+    gravity: 0.5,
+    jumpStrength: -15,
+    isJumping: false
+  };
+
+  let obstacles = [];
+  let spawnRate = 90;
+  let frameCount = 0;
+  let gameStarted = false;
+  let score = 0;
+
+  jumpButton.addEventListener('mousedown', () => {
+    if (!gameStarted) gameStarted = true;
+    if (!kate.isJumping) {
+      kate.dy = kate.jumpStrength;
+      kate.isJumping = true;
+    }
+  });
+
+  jumpButton.addEventListener('mouseup', () => {
+    kate.isJumping = false;
+  });
+
+  function spawnObstacle() {
+    let isLobster = Math.random() < 0.1; // 10% סיכוי ללובסטר
+    let randomY = Math.random() * (canvas.height - 60);
+    obstacles.push({
+      x: canvas.width,
+      y: randomY,
+      width: 60,
+      height: 60,
+      dx: 5,
+      isLobster: isLobster
+    });
+  }
+
+  function updateKate() {
+    if (!gameStarted) return;
+
+    kate.dy += kate.gravity;
+    kate.y += kate.dy;
+
+    if (kate.y + kate.height > canvas.height) {
+      kate.y = canvas.height - kate.height;
+      kate.dy = 0;
+      kate.isJumping = false;
+    }
+  }
+
+  function updateObstacles() {
+    if (!gameStarted) return;
+
+    obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
+    obstacles.forEach(obstacle => {
+      obstacle.x -= obstacle.dx;
+    });
+  }
+
+  function checkCollision() {
+    obstacles.forEach(obstacle => {
+      const padding = 20; // ערך מוגדל כדי להקטין את אזור ההתנגשות עם הדגים
+      const isCollision =
+        kate.x + padding < obstacle.x + obstacle.width &&
+        kate.x + kate.width - padding > obstacle.x &&
+        kate.y + 30 < obstacle.y + obstacle.height &&
+        kate.y + kate.height - padding > obstacle.y;
+
+      if (isCollision) {
+        if (obstacle.isLobster) {
+          score++;
+          lobsterSound.play();  // הפעלת צליל בעת נגיעה בלובסטר
+          obstacles = obstacles.filter(o => o !== obstacle); // הסרת הלובסטר לאחר נגיעה
+        } else {
+          alert("Game Over! Refresh to try again.");
+          resetGame();
+        }
+      }
+    });
+  }
+
+  function resetGame() {
+    obstacles = [];
+    kate.y = canvas.height - kate.height;
+    kate.dy = 0;
+    frameCount = 0;
+    score = 0;
+    gameStarted = false;
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // תצוגת ניקוד
+    ctx.fillStyle = "black";
+    ctx.font = "24px Arial";
+    ctx.fillText("Score: " + score, canvas.width / 2 - 50, 40);
+
+    if (surferImage.complete) {
+      ctx.drawImage(surferImage, kate.x, kate.y, kate.width, kate.height);
+    } else {
+      ctx.fillStyle = "orange";
+      ctx.fillRect(kate.x, kate.y, kate.width, kate.height);
+    }
+
+    obstacles.forEach(obstacle => {
+      let img = obstacle.isLobster ? lobsterImage : fishImage;
+      ctx.drawImage(img, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+    });
+  }
+
+  function gameLoop() {
+    frameCount++;
+    if (frameCount % spawnRate === 0 && gameStarted) spawnObstacle();
+
+    updateKate();
+    updateObstacles();
+    checkCollision();
+    draw();
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  gameLoop();
+</script>
+
+</body>
+</html>
