@@ -70,7 +70,7 @@
             canvas.style.display = "block";
             document.getElementById("jumpButton").style.display = "block";
             canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            canvas.height = window.innerHeight - 50; // השארת רווח בתחתית הקנבס
         }
     }
 
@@ -85,14 +85,14 @@
 
     let kate = {
         x: 50,
-        y: canvas.height - 80,
+        y: canvas.height - 100, // שינינו את המיקום ההתחלתי למעלה יותר
         width: 80,
         height: 80,
         dy: 0,
-        gravity: 0.2, // הורד את הגרביטי ל-0.2 כדי שהגולש ירד לאט יותר
+        gravity: 0.2,
         isJumping: false,
         jumpCount: 0,
-        maxJumpCount: 3  // מספר הקפיצות המקסימלי (למשל 3 קפיצות)
+        maxJumpCount: 3
     };
 
     const fishImages = [
@@ -115,7 +115,7 @@
     let obstacles = [];
     let frameCount = 0;
     let spawnRate = 150;
-    let obstacleSpeed = 2; // הורד את מהירות ההתקדמות של המכשולים ל-2
+    let obstacleSpeed = 2;
     let gameStarted = false;
 
     const jumpButton = document.getElementById("jumpButton");
@@ -124,7 +124,7 @@
     function startJump() {
         if (!gameStarted) gameStarted = true;
         if (kate.jumpCount < kate.maxJumpCount) {
-            kate.dy = -12;  // כיוון כלפי מעלה
+            kate.dy = -12;
             kate.isJumping = true;
             kate.jumpCount++;
         }
@@ -154,7 +154,7 @@
             kate.y = canvas.height - kate.height;
             kate.dy = 0;
             kate.isJumping = false;
-            kate.jumpCount = 0;  // אפס את מספר הקפיצות כאשר הגולש נוגע בקרקע
+            kate.jumpCount = 0;
         }
     }
 
@@ -196,7 +196,7 @@
         frameCount = 0;
         score = 0;
         gameStarted = false;
-        kate.jumpCount = 0;  // אפס את מספר הקפיצות כאשר המשחק מתאפס
+        kate.jumpCount = 0;
     }
 
     function draw() {
