@@ -66,8 +66,8 @@
 
   function scaleGame() {
     let scale = Math.min(window.innerWidth / 800, window.innerHeight / 600);
-    kate.width = 160 * scale; // הגדלת גודל הגולש פי 2
-    kate.height = 160 * scale;
+    kate.width = 200 * scale; // הגדלת גודל הגולש
+    kate.height = 200 * scale;
     obstacleSpeed = 5 * scale;
   }
 
@@ -85,10 +85,10 @@
   let kate = {
     x: 50,
     y: canvas.height - 200, // הנמכת הגולש לחלק התחתון של המסך
-    width: 160, // גודל הגולש פי 2
-    height: 160,
+    width: 200, // גודל הגולש
+    height: 200,
     dy: 0,
-    gravity: 0.5,
+    gravity: 0.2, // הפחתת כוח הכבידה
     jumpStrength: -10,
     isJumping: false
   };
