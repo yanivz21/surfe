@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Kate Surfing Game</title>
   <style>
     body, html {
       margin: 0;
       overflow: hidden;
+      height: 100vh; /* שימוש מלא בשטח המסך */
     }
     #gameCanvas {
       background-color: #87CEEB;
@@ -66,8 +67,8 @@
 
   function scaleGame() {
     let scale = Math.min(window.innerWidth / 800, window.innerHeight / 600);
-    kate.width = 200 * scale; // הגדלת גודל הגולש
-    kate.height = 200 * scale;
+    kate.width = 300 * scale; // הגדלת גודל הגולש
+    kate.height = 300 * scale;
     obstacleSpeed = 5 * scale;
   }
 
@@ -84,11 +85,11 @@
 
   let kate = {
     x: 50,
-    y: canvas.height - 220, // הנמכת הגולש לחלק התחתון של המסך (גובה הגולש + רווח)
-    width: 200, // גודל הגולש
-    height: 200,
+    y: canvas.height - 220, // מיקום ההתחלה בתחתית המסך
+    width: 300,
+    height: 300,
     dy: 0,
-    gravity: 0.2, // הפחתת כוח הכבידה
+    gravity: 0.2, // הפחתת הכבידה
     jumpStrength: -10,
     isJumping: false
   };
@@ -171,7 +172,7 @@
 
   function resetGame() {
     obstacles = [];
-    kate.y = canvas.height - kate.height; // החזרת הגולש לתחתית
+    kate.y = canvas.height - kate.height;
     kate.dy = 0;
     frameCount = 0;
     score = 0;
