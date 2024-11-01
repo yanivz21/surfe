@@ -70,6 +70,7 @@
     const lobsterImage = new Image();
     lobsterImage.src = 'lobster_image.png';
     const lobsterSound = new Audio('lobster_sound.mp3');
+    const fishCollisionSound = new Audio('fish_collision_sound.mp3'); // קובץ הצליל בעת התנגשות בדג
 
     function getRandomFishImage() {
         const randomIndex = Math.floor(Math.random() * fishImages.length);
@@ -138,6 +139,7 @@
                     lobsterSound.play();
                     obstacles = obstacles.filter(o => o !== obstacle);
                 } else {
+                    fishCollisionSound.play(); // הפעלת צליל בעת התנגשות בדג
                     alert("Game Over! Refresh to play again.");
                     resetGame();
                 }
