@@ -58,7 +58,7 @@
         width: 80,
         height: 80,
         dy: 0,
-        gravity: 0.05, // הורדת מהירות הנפילה
+        gravity: 0.05,
         isJumping: false,
     };
 
@@ -88,8 +88,8 @@
     let score = 0;
     let obstacles = [];
     let frameCount = 0;
-    const spawnRate = 150; // הגדל את הערך כדי להקטין את קצב ההופעה של האובייקטים
-    let obstacleSpeed = 1.0; // מהירות אובייקטים מונמכת למכשירים קטנים יותר
+    const spawnRate = 150;
+    let obstacleSpeed = 1.0;
 
     const jumpButton = document.getElementById("jumpButton");
     jumpButton.addEventListener("mousedown", () => jump());
@@ -139,12 +139,14 @@
         });
     }
 
+    const collisionBuffer = 0.25; // טווח התנגשות של 25%
+
     function checkCollision() {
         obstacles.forEach(obstacle => {
             const collisionDetected = 
                 kate.x < obstacle.x + obstacle.width &&
                 kate.x + kate.width > obstacle.x &&
-                kate.y < obstacle.y + obstacle.height &&
+                kate.y < obstacle.y + obstacle.height + (obstacle.height * collisionBuffer) && // התוספת הזו
                 kate.y + kate.height > obstacle.y;
 
             if (collisionDetected) {
