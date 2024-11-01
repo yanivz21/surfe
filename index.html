@@ -58,11 +58,11 @@
         width: 80,
         height: 80,
         dy: 0,
-        gravity: 0.1,
+        gravity: 0.05, // הורדת מהירות הנפילה
         isJumping: false,
     };
 
-    const groundOffset = canvas.height * 0.15; // הגבהת הקרקע
+    const groundOffset = canvas.height * 0.15;
 
     const fishImages = [
         'fish1.png', 'fish2.png', 'fish3.png', 'fish4.png', 'fish5.png',
@@ -89,7 +89,7 @@
     let obstacles = [];
     let frameCount = 0;
     const spawnRate = 100;
-    let obstacleSpeed = 1.5;
+    let obstacleSpeed = 1.0; // מהירות אובייקטים מונמכת למכשירים קטנים יותר
 
     const jumpButton = document.getElementById("jumpButton");
     jumpButton.addEventListener("mousedown", () => jump());
@@ -101,7 +101,7 @@
 
     function spawnObstacle() {
         const isLobster = Math.random() < 0.1;
-        const isPhone = Math.random() < 0.1 && !obstacles.some(obstacle => obstacle.isPhone); // לוודא רק טלפון אחד
+        const isPhone = Math.random() < 0.1 && !obstacles.some(obstacle => obstacle.isPhone);
 
         const obstacle = {
             x: canvas.width,
