@@ -62,6 +62,8 @@
         isJumping: false,
     };
 
+    const groundOffset = canvas.height * 0.15; // הגבהת הקרקע
+
     const fishImages = [
         'fish1.png', 'fish2.png', 'fish3.png', 'fish4.png', 'fish5.png',
         'fish6.png', 'fish7.png', 'fish8.png', 'fish9.png', 'fish10.png'
@@ -70,7 +72,11 @@
     const lobsterImage = new Image();
     lobsterImage.src = 'lobster_image.png';
     const lobsterSound = new Audio('lobster_sound.mp3');
-    const fishCollisionSound = new Audio('fish_collision_sound.mp3'); // קובץ הצליל בעת התנגשות בדג
+    const fishCollisionSound = new Audio('fish_collision_sound.mp3');
+    const phoneImage = new Image();
+    phoneImage.src = 'phone_image.png';
+    const phoneHitSound = new Audio('phone_hit_sound.mp3');
+    const phoneMissSound = new Audio('phone_miss_sound.mp3');
 
     function getRandomFishImage() {
         const randomIndex = Math.floor(Math.random() * fishImages.length);
@@ -89,12 +95,14 @@
     jumpButton.addEventListener("mousedown", () => jump());
 
     function jump() {
-        kate.dy = -4.5; // קפיצה
+        kate.dy = -4.5;
         kate.isJumping = true;
     }
 
     function spawnObstacle() {
         const isLobster = Math.random() < 0.1;
+        const isPhone = Math.random() < 0.1 && !obstacles.some(obstacle => obstacle.isPhone); // לוודא רק טלפון אחד
+
         const obstacle = {
             x: canvas.width,
             y: Math.random() * (canvas.height - 60),
@@ -102,7 +110,8 @@
             height: 40,
             dx: obstacleSpeed,
             isLobster: isLobster,
-            image: isLobster ? lobsterImage : getRandomFishImage()
+            isPhone: isPhone,
+            image: isLobster ? lobsterImage : isPhone ? phoneImage : getRandomFishImage()
         };
         obstacles.push(obstacle);
     }
@@ -111,8 +120,8 @@
         kate.dy += kate.gravity;
         kate.y += kate.dy;
 
-        if (kate.y + kate.height > canvas.height) {
-            kate.y = canvas.height - kate.height;
+        if (kate.y + kate.height > canvas.height - groundOffset) {
+            kate.y = canvas.height - kate.height - groundOffset;
             kate.dy = 0;
             kate.isJumping = false;
         }
@@ -122,6 +131,11 @@
         obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
         obstacles.forEach(obstacle => {
             obstacle.x -= obstacle.dx;
+
+            if (obstacle.isPhone && obstacle.x + obstacle.width < kate.x && !obstacle.passed) {
+                phoneMissSound.play();
+                obstacle.passed = true;
+            }
         });
     }
 
@@ -138,8 +152,11 @@
                     score++;
                     lobsterSound.play();
                     obstacles = obstacles.filter(o => o !== obstacle);
+                } else if (obstacle.isPhone) {
+                    phoneHitSound.play();
+                    obstacles = obstacles.filter(o => o !== obstacle);
                 } else {
-                    fishCollisionSound.play(); // הפעלת צליל בעת התנגשות בדג
+                    fishCollisionSound.play();
                     alert("Game Over! Refresh to play again.");
                     resetGame();
                 }
@@ -149,7 +166,7 @@
 
     function resetGame() {
         obstacles = [];
-        kate.y = canvas.height - kate.height;
+        kate.y = canvas.height - kate.height - groundOffset;
         kate.dy = 0;
         frameCount = 0;
         score = 0;
@@ -180,7 +197,6 @@
         requestAnimationFrame(gameLoop);
     }
 
-    // למנוע משחק מאונך בניידים
     function preventPortraitMode() {
         if (window.innerHeight > window.innerWidth) {
             alert("Please rotate your device to landscape mode to play.");
