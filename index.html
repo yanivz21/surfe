@@ -12,27 +12,12 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: lightblue;
             height: 100vh;
-            width: 100vw;
-        }
-
-        canvas {
-            display: block;
             background-color: lightblue;
         }
-
-        #rotateMessage {
-            display: none;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 24px;
-            color: red;
-            text-align: center;
+        canvas {
+            background-color: lightblue;
         }
-
         #jumpButton {
             position: fixed;
             bottom: 20px;
@@ -43,8 +28,8 @@
             color: white;
             font-size: 20px;
             border: none;
-            border-radius: 10px;
             cursor: pointer;
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -52,47 +37,29 @@
 
 <canvas id="gameCanvas"></canvas>
 <button id="jumpButton">Jump</button>
-<div id="rotateMessage">Please rotate your device to play the game.</div>
 
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    const rotateMessage = document.getElementById("rotateMessage");
 
-    // Function to adjust canvas size for mobile screens and orientation
-    function adjustCanvasSize() {
-        if (window.innerHeight > window.innerWidth) {
-            rotateMessage.style.display = "block";
-            canvas.style.display = "none";
-            document.getElementById("jumpButton").style.display = "none";
-        } else {
-            rotateMessage.style.display = "none";
-            canvas.style.display = "block";
-            document.getElementById("jumpButton").style.display = "block";
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight - 50; // השארת רווח בתחתית הקנבס
-        }
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     }
-
-    // Initial call to adjust canvas size
-    adjustCanvasSize();
-
-    // Add event listener for orientation change or window resize
-    window.addEventListener("resize", adjustCanvasSize);
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
 
     const surferImage = new Image();
     surferImage.src = 'surfer_with_surfboard.png';
 
     let kate = {
         x: 50,
-        y: canvas.height - 100, // שינינו את המיקום ההתחלתי למעלה יותר
+        y: canvas.height - 120,
         width: 80,
         height: 80,
         dy: 0,
-        gravity: 0.2,
+        gravity: 0.1,
         isJumping: false,
-        jumpCount: 0,
-        maxJumpCount: 3
     };
 
     const fishImages = [
@@ -114,39 +81,32 @@
     let score = 0;
     let obstacles = [];
     let frameCount = 0;
-    let spawnRate = 150;
-    let obstacleSpeed = 2;
-    let gameStarted = false;
+    const spawnRate = 100;
+    let obstacleSpeed = 1.5;
 
     const jumpButton = document.getElementById("jumpButton");
-    jumpButton.addEventListener("mousedown", () => startJump());
+    jumpButton.addEventListener("mousedown", () => jump());
 
-    function startJump() {
-        if (!gameStarted) gameStarted = true;
-        if (kate.jumpCount < kate.maxJumpCount) {
-            kate.dy = -12;
-            kate.isJumping = true;
-            kate.jumpCount++;
-        }
+    function jump() {
+        kate.dy = -4.5; // קפיצה
+        kate.isJumping = true;
     }
 
     function spawnObstacle() {
-        let isLobster = Math.random() < 0.1;
-        let randomY = Math.random() * (canvas.height - 60);
-        obstacles.push({
+        const isLobster = Math.random() < 0.1;
+        const obstacle = {
             x: canvas.width,
-            y: randomY,
+            y: Math.random() * (canvas.height - 60),
             width: 40,
             height: 40,
             dx: obstacleSpeed,
             isLobster: isLobster,
             image: isLobster ? lobsterImage : getRandomFishImage()
-        });
+        };
+        obstacles.push(obstacle);
     }
 
     function updateKate() {
-        if (!gameStarted) return;
-
         kate.dy += kate.gravity;
         kate.y += kate.dy;
 
@@ -154,13 +114,10 @@
             kate.y = canvas.height - kate.height;
             kate.dy = 0;
             kate.isJumping = false;
-            kate.jumpCount = 0;
         }
     }
 
     function updateObstacles() {
-        if (!gameStarted) return;
-
         obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
         obstacles.forEach(obstacle => {
             obstacle.x -= obstacle.dx;
@@ -169,20 +126,19 @@
 
     function checkCollision() {
         obstacles.forEach(obstacle => {
-            const padding = 20;
-            const isCollision =
-                kate.x + padding < obstacle.x + obstacle.width &&
-                kate.x + kate.width - padding > obstacle.x &&
-                kate.y + 30 < obstacle.y + obstacle.height &&
-                kate.y + kate.height - padding > obstacle.y;
+            const collisionDetected = 
+                kate.x < obstacle.x + obstacle.width &&
+                kate.x + kate.width > obstacle.x &&
+                kate.y < obstacle.y + obstacle.height &&
+                kate.y + kate.height > obstacle.y;
 
-            if (isCollision) {
+            if (collisionDetected) {
                 if (obstacle.isLobster) {
                     score++;
                     lobsterSound.play();
                     obstacles = obstacles.filter(o => o !== obstacle);
                 } else {
-                    alert("Game Over! Refresh to try again.");
+                    alert("Game Over! Refresh to play again.");
                     resetGame();
                 }
             }
@@ -195,23 +151,15 @@
         kate.dy = 0;
         frameCount = 0;
         score = 0;
-        gameStarted = false;
-        kate.jumpCount = 0;
     }
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         ctx.fillStyle = "black";
         ctx.font = "24px Arial";
-        ctx.fillText("Score: " + score, canvas.width / 2 - 50, 40);
+        ctx.fillText("Score: " + score, canvas.width / 2 - 50, 30);
 
-        if (surferImage.complete) {
-            ctx.drawImage(surferImage, kate.x, kate.y, kate.width, kate.height);
-        } else {
-            ctx.fillStyle = "orange";
-            ctx.fillRect(kate.x, kate.y, kate.width, kate.height);
-        }
+        ctx.drawImage(surferImage, kate.x, kate.y, kate.width, kate.height);
 
         obstacles.forEach(obstacle => {
             ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
@@ -220,7 +168,7 @@
 
     function gameLoop() {
         frameCount++;
-        if (frameCount % spawnRate === 0 && gameStarted) spawnObstacle();
+        if (frameCount % spawnRate === 0) spawnObstacle();
 
         updateKate();
         updateObstacles();
@@ -229,6 +177,15 @@
 
         requestAnimationFrame(gameLoop);
     }
+
+    // למנוע משחק מאונך בניידים
+    function preventPortraitMode() {
+        if (window.innerHeight > window.innerWidth) {
+            alert("Please rotate your device to landscape mode to play.");
+        }
+    }
+    window.addEventListener('resize', preventPortraitMode);
+    preventPortraitMode();
 
     gameLoop();
 </script>
