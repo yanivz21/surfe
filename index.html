@@ -86,7 +86,7 @@
     let score = 0;
     let obstacles = [];
     let frameCount = 0;
-    const spawnRate = 100;
+    const spawnRate = 150; // הגדלת הזמן בין הופעות דגים
     let obstacleSpeed = 1.5;
 
     const jumpButton = document.getElementById("jumpButton");
@@ -107,7 +107,7 @@
 
         const obstacle = {
             x: canvas.width,
-            y: Math.random() * (canvas.height - 60 - kate.height), // הימנע מהופעה מתחת לגובה הגולש
+            y: Math.random() * (canvas.height - 100 - kate.height), // הימנע מהופעה מתחת לגובה הגולש והלחצן
             width: 40,
             height: 40,
             dx: obstacleSpeed,
