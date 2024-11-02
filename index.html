@@ -54,11 +54,11 @@
 
     let kate = {
         x: 50,
-        y: canvas.height - 150, // הגביה את גובה הגולש
+        y: canvas.height - 140, // הגביה את גובה הגולש
         width: 80,
         height: 80,
         dy: 0,
-        gravity: 0.15, // הורד את כוח הכבידה
+        gravity: 0.15, // כוח כבידה
         isJumping: false,
     };
 
@@ -107,7 +107,7 @@
 
         const obstacle = {
             x: canvas.width,
-            y: Math.random() * (canvas.height - 60),
+            y: Math.random() * (canvas.height - 60 - kate.height), // הימנע מהופעה מתחת לגובה הגולש
             width: 40,
             height: 40,
             dx: obstacleSpeed,
