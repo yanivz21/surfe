@@ -31,12 +31,87 @@
             cursor: pointer;
             border-radius: 10px;
         }
+        #startButton {
+            position: absolute;
+            top: calc(50% + 300px);
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 15px 30px;
+            background-color: green;
+            color: white;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+            border-radius: 10px;
+            display: none;
+        }
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            font-size: 20px;
+            text-align: center;
+            display: none;
+        }
+        .score-guide {
+            border: 2px solid white;
+            padding: 20px;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            position: relative;
+        }
+        .score-guide img {
+            width: 30px;
+            height: 30px;
+            vertical-align: middle;
+            margin-left: 10px;
+        }
+        #gameOverMessage {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: red;
+            font-size: 60px;
+            display: none;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body>
 
 <canvas id="gameCanvas"></canvas>
 <button id="jumpButton">Jump</button>
+<div id="overlay" class="overlay">
+    <div class="score-guide">
+        <h2>מקרא ניקוד</h2>
+        <p>איסוף לובסטר: +1 נקודה <img src="lobster_image.png" alt="לובסטר" /></p>
+        <p>פגיעה בטלפון: +5 נקודות <img src="phone_image.png" alt="טלפון" /></p>
+        <p>החמצת טלפון: -5 נקודות <img src="phone_image.png" alt="טלפון" /></p>
+        <p>פגיעה בדג: סוף המשחק <img src="fish1.png" alt="דג" /></p>
+    </div>
+</div>
+<button id="startButton">התחל משחק</button>
+<div id="gameOverMessage">המשחק נגמר</div>
 
 <script>
     const canvas = document.getElementById("gameCanvas");
@@ -54,12 +129,13 @@
 
     let kate = {
         x: 50,
-        y: canvas.height - 140, // הגביה את גובה הגולש
+        y: canvas.height - 120,
         width: 80,
         height: 80,
         dy: 0,
-        gravity: 0.15, // כוח כבידה
-        isJumping: false,
+        gravity: 0.2,
+        jumpForce: 5,
+        isJumping: false
     };
 
     const fishImages = [
@@ -71,10 +147,11 @@
     lobsterImage.src = 'lobster_image.png';
     const lobsterSound = new Audio('lobster_sound.mp3');
     const fishCollisionSound = new Audio('fish_collision_sound.mp3');
-    const phoneImage = new Image();
-    phoneImage.src = 'phone_image.png';
     const phoneHitSound = new Audio('phone_hit_sound.mp3');
     const phoneMissSound = new Audio('phone_miss_sound.mp3');
+
+    const phoneImage = new Image();
+    phoneImage.src = 'phone_image.png';
 
     function getRandomFishImage() {
         const randomIndex = Math.floor(Math.random() * fishImages.length);
@@ -86,28 +163,48 @@
     let score = 0;
     let obstacles = [];
     let frameCount = 0;
-    const spawnRate = 150; // הגדלת הזמן בין הופעות דגים
+    const spawnRate = 100;
     let obstacleSpeed = 1.5;
+    let gameStarted = false;
 
     const jumpButton = document.getElementById("jumpButton");
-    jumpButton.addEventListener("mousedown", () => jump());
+    const startButton = document.getElementById("startButton");
+    const overlay = document.getElementById("overlay");
+    const gameOverMessage = document.getElementById("gameOverMessage");
+
+    startButton.addEventListener("click", () => {
+        startGame();
+    });
+
+    jumpButton.addEventListener("mousedown", () => {
+        if (gameStarted) {
+            jump();
+        }
+    });
+
+    window.addEventListener("keydown", (event) => {
+        if (event.code === "Space") {
+            jump();
+        }
+    });
 
     function jump() {
-        if (kate.isJumping) {
-            kate.dy += -2; // עלייה מתונה יותר
-        } else {
-            kate.dy = -5; // קפיצה ראשונה
+        if (gameStarted) {
+            kate.dy = -kate.jumpForce;
             kate.isJumping = true;
         }
     }
 
     function spawnObstacle() {
         const isLobster = Math.random() < 0.1;
-        const isPhone = Math.random() < 0.1 && !obstacles.some(obstacle => obstacle.isPhone); // לוודא רק טלפון אחד
+        const isPhone = Math.random() < 0.1 && !obstacles.some(obstacle => obstacle.isPhone);
+
+        const phoneY = isPhone ? Math.random() * (canvas.height - 60) : -100;
+        const fishY = Math.random() * (canvas.height - 60);
 
         const obstacle = {
             x: canvas.width,
-            y: Math.random() * (canvas.height - 100 - kate.height), // הימנע מהופעה מתחת לגובה הגולש והלחצן
+            y: isPhone ? phoneY : fishY,
             width: 40,
             height: 40,
             dx: obstacleSpeed,
@@ -122,56 +219,56 @@
         kate.dy += kate.gravity;
         kate.y += kate.dy;
 
-        if (kate.y + kate.height > canvas.height - 20) { // גבול תחתון
-            kate.y = canvas.height - 20 - kate.height; // הגביה את הגבול התחתון
-            kate.dy = 0;
+        if (kate.y > canvas.height - kate.height) {
+            kate.y = canvas.height - kate.height;
             kate.isJumping = false;
+        }
+
+        if (kate.y < 0) {
+            kate.y = 0;
         }
     }
 
     function updateObstacles() {
-        obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
         obstacles.forEach(obstacle => {
             obstacle.x -= obstacle.dx;
-
-            if (obstacle.isPhone && obstacle.x + obstacle.width < kate.x && !obstacle.passed) {
-                phoneMissSound.play();
-                obstacle.passed = true;
-            }
         });
+        obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
     }
 
     function checkCollision() {
         obstacles.forEach(obstacle => {
-            const collisionDetected = 
+            if (
                 kate.x < obstacle.x + obstacle.width &&
                 kate.x + kate.width > obstacle.x &&
                 kate.y < obstacle.y + obstacle.height &&
-                kate.y + kate.height > obstacle.y;
-
-            if (collisionDetected) {
-                if (obstacle.isLobster) {
-                    score++;
-                    lobsterSound.play();
-                    obstacles = obstacles.filter(o => o !== obstacle);
-                } else if (obstacle.isPhone) {
+                kate.y + kate.height > obstacle.y
+            ) {
+                if (obstacle.isPhone) {
+                    score += 5;
                     phoneHitSound.play();
                     obstacles = obstacles.filter(o => o !== obstacle);
+                } else if (obstacle.isLobster) {
+                    score += 1;
+                    lobsterSound.play();
+                    obstacles = obstacles.filter(o => o !== obstacle);
                 } else {
+                    gameOver();
                     fishCollisionSound.play();
-                    alert("Game Over! Refresh to play again.");
-                    resetGame();
                 }
+            } else if (obstacle.x < 0 && obstacle.isPhone) {
+                score -= 5;
+                phoneMissSound.play();
+                obstacles = obstacles.filter(o => o !== obstacle);
             }
         });
     }
 
-    function resetGame() {
-        obstacles = [];
-        kate.y = canvas.height - kate.height;
-        kate.dy = 0;
-        frameCount = 0;
-        score = 0;
+    function gameOver() {
+        gameStarted = false;
+        overlay.style.display = 'flex';
+        startButton.style.display = 'block';
+        gameOverMessage.style.display = 'block';
     }
 
     function draw() {
@@ -188,27 +285,35 @@
     }
 
     function gameLoop() {
-        frameCount++;
-        if (frameCount % spawnRate === 0) spawnObstacle();
-
+        if (!gameStarted) return;
         updateKate();
         updateObstacles();
         checkCollision();
         draw();
-
+        frameCount++;
+        if (frameCount % spawnRate === 0) {
+            spawnObstacle();
+        }
         requestAnimationFrame(gameLoop);
     }
 
-    function preventPortraitMode() {
-        if (window.innerHeight > window.innerWidth) {
-            alert("Please rotate your device to landscape mode to play.");
-        }
+    function startGame() {
+        score = 0;
+        obstacles = [];
+        frameCount = 0;
+        kate.y = canvas.height - 120;
+        kate.dy = 0;
+        gameStarted = true;
+        overlay.style.display = 'none';
+        startButton.style.display = 'none';
+        gameOverMessage.style.display = 'none';
+        gameLoop();
     }
-    window.addEventListener('resize', preventPortraitMode);
-    preventPortraitMode();
 
-    gameLoop();
+    // הצגת המקרא בתחילת המשחק
+    overlay.style.display = 'flex';
+    startButton.style.display = 'block';
+
 </script>
-
 </body>
 </html>
