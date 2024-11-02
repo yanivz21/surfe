@@ -58,11 +58,12 @@
         width: 80,
         height: 80,
         dy: 0,
-        gravity: 0.02, // הורדת מהירות הנפילה
+        gravity: 0.01, // הפחתת מהירות הנפילה של הגולש
         isJumping: false,
     };
 
-    const groundOffset = canvas.height * 0.1; // מוריד את הגבול התחתון במסך הפלאפון
+    const groundOffset = canvas.height * 0.1;
+    const maxObjectY = canvas.height - kate.height - groundOffset - 50; // גובה מרבי לאובייקטים
 
     const fishImages = [
         'fish1.png', 'fish2.png', 'fish3.png', 'fish4.png', 'fish5.png',
@@ -88,14 +89,14 @@
     let score = 0;
     let obstacles = [];
     let frameCount = 0;
-    const spawnRate = 300; // הורדת כמות הדגים על המסך בחצי
+    const spawnRate = 300;
     let obstacleSpeed = 1.0;
 
     const jumpButton = document.getElementById("jumpButton");
     jumpButton.addEventListener("mousedown", () => jump());
 
     function jump() {
-        kate.dy = -3.0; // קפיצה עדינה יותר
+        kate.dy = -2.5; // קפיצה עדינה יותר
         kate.isJumping = true;
     }
 
@@ -105,7 +106,7 @@
 
         const obstacle = {
             x: canvas.width,
-            y: Math.random() * (canvas.height - 60),
+            y: Math.random() * maxObjectY, // הגבלת גובה לאובייקטים
             width: 40,
             height: 40,
             dx: obstacleSpeed,
@@ -204,10 +205,11 @@
             alert("Please rotate your device to landscape mode to play.");
         }
     }
-    window.addEventListener('resize', preventPortraitMode);
-    preventPortraitMode();
 
+    window.addEventListener("resize", preventPortraitMode);
+    preventPortraitMode();
     gameLoop();
+
 </script>
 
 </body>
