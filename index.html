@@ -18,6 +18,9 @@
         canvas {
             background-color: lightblue;
         }
+        #jumpButton, #startButton, .overlay {
+            font-size: calc(2vw + 2vh);
+        }
         #jumpButton {
             position: fixed;
             bottom: 20px;
@@ -39,7 +42,6 @@
             padding: 15px 30px;
             background-color: green;
             color: white;
-            font-size: 24px;
             border: none;
             cursor: pointer;
             border-radius: 10px;
@@ -57,43 +59,14 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            font-size: 20px;
             text-align: center;
             display: none;
         }
         .score-guide {
-            border: 2px solid white;
-            padding: 20px;
-            border-radius: 15px;
+            padding: 10px;
             background: rgba(0, 0, 0, 0.7);
-            position: relative;
-        }
-        .score-guide img {
-            width: 30px;
-            height: 30px;
-            vertical-align: middle;
-            margin-left: 10px;
-        }
-        #gameOverMessage {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: red;
-            font-size: 60px;
-            display: none;
-            animation: fadeIn 1s ease-in-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            border-radius: 10px;
+            text-align: center;
         }
     </style>
 </head>
@@ -103,26 +76,44 @@
 <button id="jumpButton">Jump</button>
 <div id="overlay" class="overlay">
     <div class="score-guide">
-        <h2>מקרא ניקוד</h2>
-        <p>איסוף לובסטר: +1 נקודה <img src="lobster_image.png" alt="לובסטר" /></p>
-        <p>פגיעה בטלפון: +5 נקודות <img src="phone_image.png" alt="טלפון" /></p>
-        <p>החמצת טלפון: -5 נקודות <img src="phone_image.png" alt="טלפון" /></p>
-        <p>פגיעה בדג: סוף המשחק <img src="fish1.png" alt="דג" /></p>
+        <h2>Score Legend</h2>
+        <p>Collect Lobster: +1 point <img src="lobster_image.png" alt="lobster" width="30" height="30" /></p>
+        <p>Hit Phone: +5 points <img src="phone_image.png" alt="phone" width="30" height="30" /></p>
+        <p>Miss Phone: -5 points <img src="phone_image.png" alt="phone" width="30" height="30" /></p>
+        <p>Hit Fish: Game Over <img src="fish1.png" alt="fish" width="30" height="30" /></p>
     </div>
 </div>
-<button id="startButton">התחל משחק</button>
-<div id="gameOverMessage">המשחק נגמר</div>
+<button id="startButton">Start Game</button>
 
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
+    function setScaleFactor() {
+        let scaleFactor;
+        if (window.innerWidth > window.innerHeight) {
+            scaleFactor = Math.min(window.innerWidth / 1280, window.innerHeight / 720);
+        } else {
+            scaleFactor = Math.min(window.innerWidth / 720, window.innerHeight / 1280);
+        }
+        return scaleFactor;
+    }
+
     function resizeCanvas() {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
+        scaleFactor = setScaleFactor();
+
+        kate.width = 80 * scaleFactor;
+        kate.height = 80 * scaleFactor;
+        kate.jumpForce = 5 * scaleFactor;
+        kate.gravity = 0.2 * scaleFactor;
+
+        obstacleSpeed = 1.5 * scaleFactor;
     }
-    resizeCanvas();
+
     window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
 
     const surferImage = new Image();
     surferImage.src = 'surfer_with_surfboard.png';
@@ -138,28 +129,6 @@
         isJumping: false
     };
 
-    const fishImages = [
-        'fish1.png', 'fish2.png', 'fish3.png', 'fish4.png', 'fish5.png',
-        'fish6.png', 'fish7.png', 'fish8.png', 'fish9.png', 'fish10.png'
-    ];
-
-    const lobsterImage = new Image();
-    lobsterImage.src = 'lobster_image.png';
-    const lobsterSound = new Audio('lobster_sound.mp3');
-    const fishCollisionSound = new Audio('fish_collision_sound.mp3');
-    const phoneHitSound = new Audio('phone_hit_sound.mp3');
-    const phoneMissSound = new Audio('phone_miss_sound.mp3');
-
-    const phoneImage = new Image();
-    phoneImage.src = 'phone_image.png';
-
-    function getRandomFishImage() {
-        const randomIndex = Math.floor(Math.random() * fishImages.length);
-        const fishImage = new Image();
-        fishImage.src = fishImages[randomIndex];
-        return fishImage;
-    }
-
     let score = 0;
     let obstacles = [];
     let frameCount = 0;
@@ -170,48 +139,45 @@
     const jumpButton = document.getElementById("jumpButton");
     const startButton = document.getElementById("startButton");
     const overlay = document.getElementById("overlay");
-    const gameOverMessage = document.getElementById("gameOverMessage");
 
-    startButton.addEventListener("click", () => {
-        startGame();
-    });
-
-    jumpButton.addEventListener("mousedown", () => {
-        if (gameStarted) {
-            jump();
-        }
-    });
-
+    startButton.addEventListener("click", startGame);
+    jumpButton.addEventListener("mousedown", jump);
     window.addEventListener("keydown", (event) => {
-        if (event.code === "Space") {
-            jump();
-        }
+        if (event.code === "Space") jump();
     });
 
     function jump() {
-        if (gameStarted) {
+        if (gameStarted && !kate.isJumping) {
             kate.dy = -kate.jumpForce;
             kate.isJumping = true;
         }
     }
 
+    function startGame() {
+        score = 0;
+        obstacles = [];
+        frameCount = 0;
+        gameStarted = true;
+        overlay.style.display = 'none';
+        startButton.style.display = 'none';
+        gameLoop();
+    }
+
     function spawnObstacle() {
-        const isLobster = Math.random() < 0.1;
-        const isPhone = Math.random() < 0.1 && !obstacles.some(obstacle => obstacle.isPhone);
-
-        const phoneY = isPhone ? Math.random() * (canvas.height - 60) : -100;
-        const fishY = Math.random() * (canvas.height - 60);
-
+        const isPhone = Math.random() < 0.1;
+        const isLobster = !isPhone && Math.random() < 0.1;
+        const yPosition = isPhone ? Math.random() * (canvas.height - 60) : Math.random() * canvas.height;
         const obstacle = {
             x: canvas.width,
-            y: isPhone ? phoneY : fishY,
-            width: 40,
-            height: 40,
+            y: yPosition,
+            width: 40 * scaleFactor,
+            height: 40 * scaleFactor,
             dx: obstacleSpeed,
             isLobster: isLobster,
             isPhone: isPhone,
-            image: isLobster ? lobsterImage : isPhone ? phoneImage : getRandomFishImage()
+            image: new Image()
         };
+        obstacle.image.src = isLobster ? 'lobster_image.png' : isPhone ? 'phone_image.png' : 'fish1.png';
         obstacles.push(obstacle);
     }
 
@@ -223,16 +189,11 @@
             kate.y = canvas.height - kate.height;
             kate.isJumping = false;
         }
-
-        if (kate.y < 0) {
-            kate.y = 0;
-        }
+        if (kate.y < 0) kate.y = 0;
     }
 
     function updateObstacles() {
-        obstacles.forEach(obstacle => {
-            obstacle.x -= obstacle.dx;
-        });
+        obstacles.forEach(obstacle => obstacle.x -= obstacle.dx);
         obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
     }
 
@@ -244,21 +205,13 @@
                 kate.y < obstacle.y + obstacle.height &&
                 kate.y + kate.height > obstacle.y
             ) {
-                if (obstacle.isPhone) {
-                    score += 5;
-                    phoneHitSound.play();
-                    obstacles = obstacles.filter(o => o !== obstacle);
-                } else if (obstacle.isLobster) {
-                    score += 1;
-                    lobsterSound.play();
-                    obstacles = obstacles.filter(o => o !== obstacle);
-                } else {
-                    gameOver();
-                    fishCollisionSound.play();
-                }
+                if (obstacle.isPhone) score += 5;
+                else if (obstacle.isLobster) score += 1;
+                else gameOver();
+
+                obstacles = obstacles.filter(o => o !== obstacle);
             } else if (obstacle.x < 0 && obstacle.isPhone) {
                 score -= 5;
-                phoneMissSound.play();
                 obstacles = obstacles.filter(o => o !== obstacle);
             }
         });
@@ -268,52 +221,32 @@
         gameStarted = false;
         overlay.style.display = 'flex';
         startButton.style.display = 'block';
-        gameOverMessage.style.display = 'block';
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "black";
-        ctx.font = "24px Arial";
-        ctx.fillText("Score: " + score, canvas.width / 2 - 50, 30);
-
-        ctx.drawImage(surferImage, kate.x, kate.y, kate.width, kate.height);
-
-        obstacles.forEach(obstacle => {
-            ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-        });
     }
 
     function gameLoop() {
-        if (!gameStarted) return;
-        updateKate();
-        updateObstacles();
-        checkCollision();
-        draw();
-        frameCount++;
-        if (frameCount % spawnRate === 0) {
-            spawnObstacle();
+        if (gameStarted) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            updateKate();
+            updateObstacles();
+            checkCollision();
+
+            ctx.drawImage(surferImage, kate.x, kate.y, kate.width, kate.height);
+
+            obstacles.forEach(obstacle => {
+                ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            });
+
+            ctx.font = `${20 * scaleFactor}px Arial`;
+            ctx.fillStyle = "black";
+            ctx.fillText("Score: " + score, 20 * scaleFactor, 30 * scaleFactor);
+
+            frameCount++;
+            if (frameCount % spawnRate === 0) spawnObstacle();
+            requestAnimationFrame(gameLoop);
         }
-        requestAnimationFrame(gameLoop);
     }
 
-    function startGame() {
-        score = 0;
-        obstacles = [];
-        frameCount = 0;
-        kate.y = canvas.height - 120;
-        kate.dy = 0;
-        gameStarted = true;
-        overlay.style.display = 'none';
-        startButton.style.display = 'none';
-        gameOverMessage.style.display = 'none';
-        gameLoop();
-    }
-
-    // הצגת המקרא בתחילת המשחק
-    overlay.style.display = 'flex';
-    startButton.style.display = 'block';
-
+    startGame();
 </script>
 </body>
 </html>
