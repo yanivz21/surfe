@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kate Surfing Game</title>
     <style>
         body, html {
@@ -13,203 +13,229 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background-color: lightblue;
+            background-color: #87CEEB;
         }
-        canvas {
-            background-color: lightblue;
-        }
-        #jumpButton {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            padding: 10px 20px;
-            background-color: red;
-            color: white;
-            font-size: 20px;
-            border: none;
-            cursor: pointer;
-            border-radius: 10px;
+        #gameCanvas {
+            background-color: #87CEEB;
         }
     </style>
 </head>
 <body>
 
 <canvas id="gameCanvas"></canvas>
-<button id="jumpButton">Jump</button>
 
 <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
 
-    function resizeCanvas() {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    let canvasWidth = window.innerWidth;
+    let canvasHeight = window.innerHeight;
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
 
-    const surferImage = new Image();
-    surferImage.src = 'surfer_with_surfboard.png';
-
-    let kate = {
-        x: 50,
-        y: canvas.height - 120,
-        width: 80,
-        height: 80,
-        dy: 0,
-        gravity: 0.01, // הפחתת מהירות הנפילה של הגולש
-        isJumping: false,
+    const kate = {
+        x: canvasWidth * 0.1,
+        y: canvasHeight * 0.8,
+        width: 60,
+        height: 120,
+        yVelocity: 0,
+        gravity: 0.02, // ערך מוגבר לכוח הכבידה
+        jumpStrength: -1.0, // כוח קפיצה מתון יותר
+        maxYPosition: canvasHeight * 0.1 // גובה עליון של הגולש
     };
 
-    const groundOffset = canvas.height * 0.1;
-    const maxObjectY = canvas.height - kate.height - groundOffset - 50; // גובה מרבי לאובייקטים
-
-    const fishImages = [
-        'fish1.png', 'fish2.png', 'fish3.png', 'fish4.png', 'fish5.png',
-        'fish6.png', 'fish7.png', 'fish8.png', 'fish9.png', 'fish10.png'
-    ];
-
-    const lobsterImage = new Image();
-    lobsterImage.src = 'lobster_image.png';
-    const lobsterSound = new Audio('lobster_sound.mp3');
-    const fishCollisionSound = new Audio('fish_collision_sound.mp3');
-    const phoneImage = new Image();
-    phoneImage.src = 'phone_image.png';
-    const phoneHitSound = new Audio('phone_hit_sound.mp3');
-    const phoneMissSound = new Audio('phone_miss_sound.mp3');
-
-    function getRandomFishImage() {
-        const randomIndex = Math.floor(Math.random() * fishImages.length);
-        const fishImage = new Image();
-        fishImage.src = fishImages[randomIndex];
-        return fishImage;
-    }
+    const fishList = [];
+    const lobsterList = [];
+    const phoneList = [];
+    const maxFishOnScreen = 5; // פחות דגים על המסך בו זמנית
 
     let score = 0;
-    let obstacles = [];
-    let frameCount = 0;
-    const spawnRate = 300;
-    let obstacleSpeed = 1.0;
 
-    const jumpButton = document.getElementById("jumpButton");
-    jumpButton.addEventListener("mousedown", () => jump());
-
-    function jump() {
-        kate.dy = -2.5; // קפיצה עדינה יותר
-        kate.isJumping = true;
-    }
-
-    function spawnObstacle() {
-        const isLobster = Math.random() < 0.1;
-        const isPhone = Math.random() < 0.1 && !obstacles.some(obstacle => obstacle.isPhone);
-
-        const obstacle = {
-            x: canvas.width,
-            y: Math.random() * maxObjectY, // הגבלת גובה לאובייקטים
-            width: 40,
-            height: 40,
-            dx: obstacleSpeed,
-            isLobster: isLobster,
-            isPhone: isPhone,
-            image: isLobster ? lobsterImage : isPhone ? phoneImage : getRandomFishImage()
-        };
-        obstacles.push(obstacle);
-    }
-
-    function updateKate() {
-        kate.dy += kate.gravity;
-        kate.y += kate.dy;
-
-        if (kate.y + kate.height > canvas.height - groundOffset) {
-            kate.y = canvas.height - kate.height - groundOffset;
-            kate.dy = 0;
-            kate.isJumping = false;
+    function createFish() {
+        if (fishList.length < maxFishOnScreen) {
+            fishList.push({
+                x: canvasWidth,
+                y: Math.random() * (canvasHeight * 0.75),
+                width: 50,
+                height: 30,
+                type: "fish",
+            });
         }
     }
 
-    function updateObstacles() {
-        obstacles = obstacles.filter(obstacle => obstacle.x + obstacle.width > 0);
-        obstacles.forEach(obstacle => {
-            obstacle.x -= obstacle.dx;
+    function createLobster() {
+        if (Math.random() < 0.1) {
+            lobsterList.push({
+                x: canvasWidth,
+                y: Math.random() * (canvasHeight * 0.75),
+                width: 60,
+                height: 40,
+                type: "lobster",
+            });
+        }
+    }
 
-            if (obstacle.isPhone && obstacle.x + obstacle.width < kate.x && !obstacle.passed) {
-                phoneMissSound.play();
-                obstacle.passed = true;
+    function createPhone() {
+        if (phoneList.length === 0 && Math.random() < 0.05) {
+            phoneList.push({
+                x: canvasWidth,
+                y: Math.random() * (canvasHeight * 0.75),
+                width: 40,
+                height: 60,
+                type: "phone",
+            });
+        }
+    }
+
+    function updateKate() {
+        kate.yVelocity += kate.gravity;
+        kate.y += kate.yVelocity;
+
+        if (kate.y + kate.height > canvasHeight) {
+            kate.y = canvasHeight - kate.height;
+            kate.yVelocity = 0;
+        }
+
+        if (kate.y < kate.maxYPosition) {
+            kate.y = kate.maxYPosition;
+            kate.yVelocity = 0;
+        }
+    }
+
+    function jump() {
+        kate.yVelocity = kate.jumpStrength;
+    }
+
+    function updateObjects() {
+        fishList.forEach((fish, index) => {
+            fish.x -= 2;
+            if (fish.x + fish.width < 0) {
+                fishList.splice(index, 1);
+            }
+        });
+
+        lobsterList.forEach((lobster, index) => {
+            lobster.x -= 2;
+            if (lobster.x + lobster.width < 0) {
+                lobsterList.splice(index, 1);
+            }
+        });
+
+        phoneList.forEach((phone, index) => {
+            phone.x -= 2;
+            if (phone.x + phone.width < 0) {
+                phoneList.splice(index, 1);
             }
         });
     }
 
-    const collisionBuffer = 0.25; 
+    function checkCollisions() {
+        fishList.forEach((fish) => {
+            if (
+                kate.x < fish.x + fish.width &&
+                kate.x + kate.width > fish.x &&
+                kate.y < fish.y + fish.height &&
+                kate.y + kate.height > fish.y
+            ) {
+                alert("Game Over!");
+                resetGame();
+            }
+        });
 
-    function checkCollision() {
-        obstacles.forEach(obstacle => {
-            const collisionDetected = 
-                kate.x < obstacle.x + obstacle.width &&
-                kate.x + kate.width > obstacle.x &&
-                kate.y < obstacle.y + obstacle.height + (obstacle.height * collisionBuffer) &&
-                kate.y + kate.height > obstacle.y;
+        lobsterList.forEach((lobster, index) => {
+            if (
+                kate.x < lobster.x + lobster.width &&
+                kate.x + kate.width > lobster.x &&
+                kate.y < lobster.y + lobster.height &&
+                kate.y + kate.height > lobster.y
+            ) {
+                score++;
+                lobsterList.splice(index, 1);
+            }
+        });
 
-            if (collisionDetected) {
-                if (obstacle.isLobster) {
-                    score++;
-                    lobsterSound.play();
-                    obstacles = obstacles.filter(o => o !== obstacle);
-                } else if (obstacle.isPhone) {
-                    phoneHitSound.play();
-                    obstacles = obstacles.filter(o => o !== obstacle);
-                } else {
-                    fishCollisionSound.play();
-                    alert("Game Over! Refresh to play again.");
-                    resetGame();
-                }
+        phoneList.forEach((phone, index) => {
+            if (
+                kate.x < phone.x + phone.width &&
+                kate.x + kate.width > phone.x &&
+                kate.y < phone.y + phone.height &&
+                kate.y + kate.height > phone.y
+            ) {
+                alert("Caught the phone!");
+                phoneList.splice(index, 1);
+            } else if (phone.x + phone.width < 0) {
+                alert("Missed the phone!");
             }
         });
     }
 
     function resetGame() {
-        obstacles = [];
-        kate.y = canvas.height - kate.height - groundOffset;
-        kate.dy = 0;
-        frameCount = 0;
+        kate.y = canvasHeight * 0.8;
+        kate.yVelocity = 0;
+        fishList.length = 0;
+        lobsterList.length = 0;
+        phoneList.length = 0;
         score = 0;
     }
 
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "black";
-        ctx.font = "24px Arial";
-        ctx.fillText("Score: " + score, canvas.width / 2 - 50, 30);
+    function drawKate() {
+        ctx.fillStyle = "blue";
+        ctx.fillRect(kate.x, kate.y, kate.width, kate.height);
+    }
 
-        ctx.drawImage(surferImage, kate.x, kate.y, kate.width, kate.height);
+    function drawObjects() {
+        ctx.fillStyle = "green";
+        fishList.forEach((fish) => {
+            ctx.fillRect(fish.x, fish.y, fish.width, fish.height);
+        });
 
-        obstacles.forEach(obstacle => {
-            ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        ctx.fillStyle = "red";
+        lobsterList.forEach((lobster) => {
+            ctx.fillRect(lobster.x, lobster.y, lobster.width, lobster.height);
+        });
+
+        ctx.fillStyle = "purple";
+        phoneList.forEach((phone) => {
+            ctx.fillRect(phone.x, phone.y, phone.width, phone.height);
         });
     }
 
+    function drawScore() {
+        ctx.fillStyle = "black";
+        ctx.font = "20px Arial";
+        ctx.fillText("Score: " + score, canvasWidth / 2 - 50, 30);
+    }
+
     function gameLoop() {
-        frameCount++;
-        if (frameCount % spawnRate === 0) spawnObstacle();
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
         updateKate();
-        updateObstacles();
-        checkCollision();
-        draw();
+        updateObjects();
+        checkCollisions();
+
+        drawKate();
+        drawObjects();
+        drawScore();
 
         requestAnimationFrame(gameLoop);
     }
 
+    document.addEventListener("click", jump);
+
     function preventPortraitMode() {
         if (window.innerHeight > window.innerWidth) {
-            alert("Please rotate your device to landscape mode to play.");
+            alert("Please rotate your device to landscape mode.");
         }
     }
 
     window.addEventListener("resize", preventPortraitMode);
     preventPortraitMode();
-    gameLoop();
 
+    setInterval(createFish, 2000);
+    setInterval(createLobster, 5000);
+    setInterval(createPhone, 7000);
+
+    gameLoop();
 </script>
 
 </body>
