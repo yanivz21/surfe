@@ -54,11 +54,11 @@
 
     let kate = {
         x: 50,
-        y: canvas.height - 120,
+        y: canvas.height - 150, // הגביה את גובה הגולש
         width: 80,
         height: 80,
         dy: 0,
-        gravity: 0.1,
+        gravity: 0.15, // הורד את כוח הכבידה
         isJumping: false,
     };
 
@@ -93,8 +93,12 @@
     jumpButton.addEventListener("mousedown", () => jump());
 
     function jump() {
-        kate.dy = -4.5;
-        kate.isJumping = true;
+        if (kate.isJumping) {
+            kate.dy += -2; // עלייה מתונה יותר
+        } else {
+            kate.dy = -5; // קפיצה ראשונה
+            kate.isJumping = true;
+        }
     }
 
     function spawnObstacle() {
@@ -118,8 +122,8 @@
         kate.dy += kate.gravity;
         kate.y += kate.dy;
 
-        if (kate.y + kate.height > canvas.height) {
-            kate.y = canvas.height - kate.height;
+        if (kate.y + kate.height > canvas.height - 20) { // גבול תחתון
+            kate.y = canvas.height - 20 - kate.height; // הגביה את הגבול התחתון
             kate.dy = 0;
             kate.isJumping = false;
         }
