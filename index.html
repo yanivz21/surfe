@@ -58,11 +58,11 @@
         width: 80,
         height: 80,
         dy: 0,
-        gravity: 0.05,
+        gravity: 0.02, // הורדת מהירות הנפילה
         isJumping: false,
     };
 
-    const groundOffset = canvas.height * 0.15;
+    const groundOffset = canvas.height * 0.1; // מוריד את הגבול התחתון במסך הפלאפון
 
     const fishImages = [
         'fish1.png', 'fish2.png', 'fish3.png', 'fish4.png', 'fish5.png',
@@ -88,14 +88,14 @@
     let score = 0;
     let obstacles = [];
     let frameCount = 0;
-    const spawnRate = 150;
+    const spawnRate = 300; // הורדת כמות הדגים על המסך בחצי
     let obstacleSpeed = 1.0;
 
     const jumpButton = document.getElementById("jumpButton");
     jumpButton.addEventListener("mousedown", () => jump());
 
     function jump() {
-        kate.dy = -4.5;
+        kate.dy = -3.0; // קפיצה עדינה יותר
         kate.isJumping = true;
     }
 
@@ -139,14 +139,14 @@
         });
     }
 
-    const collisionBuffer = 0.25; // טווח התנגשות של 25%
+    const collisionBuffer = 0.25; 
 
     function checkCollision() {
         obstacles.forEach(obstacle => {
             const collisionDetected = 
                 kate.x < obstacle.x + obstacle.width &&
                 kate.x + kate.width > obstacle.x &&
-                kate.y < obstacle.y + obstacle.height + (obstacle.height * collisionBuffer) && // התוספת הזו
+                kate.y < obstacle.y + obstacle.height + (obstacle.height * collisionBuffer) &&
                 kate.y + kate.height > obstacle.y;
 
             if (collisionDetected) {
