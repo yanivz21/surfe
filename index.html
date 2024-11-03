@@ -25,7 +25,7 @@
             bottom: 5%;
             left: 50%;
             transform: translateX(-50%);
-            padding: 5px 15px;
+            padding: 10px 20px;
             background-color: red;
             color: white;
             font-size: 18px;
@@ -39,15 +39,15 @@
             bottom: 15%;
             left: 50%;
             transform: translateX(-50%);
-            padding: 10px 25px;
+            padding: 10px 20px;
             background-color: green;
             color: white;
             font-size: 20px;
             border: none;
             cursor: pointer;
             border-radius: 10px;
-            z-index: 10;
             display: none;
+            z-index: 10;
         }
         .overlay {
             position: fixed;
@@ -61,36 +61,38 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            font-size: 16px;
+            font-size: 18px;
             text-align: center;
             display: none;
             z-index: 10;
         }
         .score-guide {
-            border: 1px solid white;
-            padding: 10px;
-            border-radius: 10px;
+            border: 2px solid white;
+            padding: 20px;
+            border-radius: 15px;
             background: rgba(0, 0, 0, 0.7);
             width: 80%;
+            max-width: 300px;
         }
         .score-guide img {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             vertical-align: middle;
             margin-left: 5px;
         }
         #orientationWarning {
             display: none;
-            position: absolute;
-            top: 50%;
+            position: fixed;
+            bottom: 0;
             left: 50%;
-            transform: translate(-50%, -50%);
+            transform: translateX(-50%);
             background-color: #ffcc00;
             color: #333;
-            padding: 20px;
+            padding: 10px;
             border-radius: 10px;
             font-size: 18px;
             text-align: center;
+            width: 80%;
             z-index: 1000;
         }
         #gameOverMessage {
@@ -155,15 +157,15 @@
     window.addEventListener("resize", checkOrientation);
     checkOrientation();
 
-    const scale = Math.min(canvas.width, canvas.height) / 1000; // סקייל יחסית למסך
+    const baseScale = Math.min(window.innerWidth, window.innerHeight) / 600; // קביעת סקייל מתאים
     let kate = {
-        x: 50 * scale,
-        y: canvas.height - 120 * scale,
-        width: 80 * scale,
-        height: 80 * scale,
+        x: 50 * baseScale,
+        y: canvas.height - 150 * baseScale, // מתאימים לגובה מסך
+        width: 100 * baseScale,
+        height: 100 * baseScale,
         dy: 0,
-        gravity: 0.2 * scale,
-        jumpForce: 5 * scale,
+        gravity: 0.4 * baseScale,
+        jumpForce: 7 * baseScale,
         isJumping: false
     };
 
@@ -196,7 +198,7 @@
     let obstacles = [];
     let frameCount = 0;
     const spawnRate = 100;
-    let obstacleSpeed = 1.5 * scale;
+    let obstacleSpeed = 2 * baseScale; // מהירות מוגדלת יחסית
     let gameStarted = false;
 
     const jumpButton = document.getElementById("jumpButton");
@@ -231,17 +233,17 @@
         const isLobster = Math.random() < 0.1;
         const isPhone = Math.random() < 0.1 && !obstacles.some(obstacle => obstacle.isPhone);
 
-        const minFishY = 0.3 * canvas.height; // לא מאפשר הופעה באזור התחתון
-        const maxFishY = 0.8 * canvas.height; // אמצע המסך לגובה מעט נמוך יותר
+        const minFishY = 0.25 * canvas.height; // אובייקטים לא יופיעו נמוך מדי
+        const maxFishY = 0.75 * canvas.height; // מגבילים את הגובה לאמצע המסך העליון
 
-        const phoneY = isPhone ? Math.random() * (canvas.height - 60 * scale) : -100;
+        const phoneY = isPhone ? Math.random() * (canvas.height - 60 * baseScale) : -100;
         const fishY = Math.random() * (maxFishY - minFishY) + minFishY;
 
         const obstacle = {
             x: canvas.width,
             y: isPhone ? phoneY : fishY,
-            width: 30 * scale,
-            height: 30 * scale,
+            width: 50 * baseScale,
+            height: 50 * baseScale,
             dx: obstacleSpeed,
             isLobster: isLobster,
             isPhone: isPhone,
@@ -309,7 +311,7 @@
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "black";
-        ctx.font = "18px Arial";
+        ctx.font = "24px Arial";
         ctx.fillText("Score: " + score, canvas.width / 2 - 50, 30);
 
         ctx.drawImage(surferImage, kate.x, kate.y, kate.width, kate.height);
@@ -336,7 +338,7 @@
         score = 0;
         obstacles = [];
         frameCount = 0;
-        kate.y = canvas.height - 120 * scale;
+        kate.y = canvas.height - 150 * baseScale; // דמות הגולש במקום הנכון
         kate.dy = 0;
         gameStarted = true;
         overlay.style.display = 'none';
