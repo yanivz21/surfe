@@ -158,18 +158,16 @@
     checkOrientation();
 
     const baseScale = Math.min(window.innerWidth, window.innerHeight) < 600 ? 0.6 : 1; // קביעת גודל סטנדרטי למחשב, התאמה לניידים
-    const gravity = 0.3 * baseScale; // כובד אחיד לכל מסך
-    const jumpForce = 5.5 * baseScale;
-    const obstacleSpeed = 2 * baseScale; // מהירות אחידה ומותאמת מסך
+    const gravity = 0.15; // כוח כבידה קבוע לכל המסכים
+    const jumpForce = 5; // כוח קפיצה קבוע
+    const obstacleSpeed = 2; // מהירות אובייקטים אחידה
 
     let kate = {
         x: 50 * baseScale,
-        y: canvas.height - 200 * baseScale,
-        width: 80 * baseScale, // החזרת הגודל למקור, מתאים למחשבים
+        y: canvas.height - 150 * baseScale,
+        width: 80 * baseScale, // הגדרות גודל אחידות למחשבים וניידים
         height: 80 * baseScale,
         dy: 0,
-        gravity: gravity,
-        jumpForce: jumpForce,
         isJumping: false
     };
 
@@ -227,7 +225,7 @@
 
     function jump() {
         if (gameStarted) {
-            kate.dy = -kate.jumpForce;
+            kate.dy = -jumpForce;
             kate.isJumping = true;
         }
     }
@@ -246,7 +244,7 @@
         const obstacle = {
             x: canvas.width,
             y: isPhone ? phoneY : fishY,
-            width: 50 * baseScale, // החזרת הגודל למקור, מתאים למסכים גדולים
+            width: 50 * baseScale,
             height: 50 * baseScale,
             dx: obstacleSpeed,
             isLobster: isLobster,
@@ -257,7 +255,7 @@
     }
 
     function updateKate() {
-        kate.dy += kate.gravity;
+        kate.dy += gravity;
         kate.y += kate.dy;
 
         if (kate.y > canvas.height - kate.height - 100 * baseScale) {
@@ -342,7 +340,7 @@
         score = 0;
         obstacles = [];
         frameCount = 0;
-        kate.y = canvas.height - 200 * baseScale;
+        kate.y = canvas.height - 150 * baseScale;
         kate.dy = 0;
         gameStarted = true;
         overlay.style.display = 'none';
