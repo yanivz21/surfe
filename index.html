@@ -16,38 +16,41 @@
             background-color: lightblue;
         }
         canvas {
+            width: 100vw;
+            height: 100vh;
             background-color: lightblue;
         }
         #jumpButton {
             position: fixed;
-            bottom: 20px;
+            bottom: 5%;
             left: 50%;
             transform: translateX(-50%);
-            padding: 10px 20px;
+            padding: 5px 15px;
             background-color: red;
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             border: none;
             cursor: pointer;
             border-radius: 10px;
             z-index: 10;
         }
         #startButton {
-            position: absolute;
-            top: calc(50% + 300px);
+            position: fixed;
+            bottom: 15%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 15px 30px;
+            transform: translateX(-50%);
+            padding: 10px 25px;
             background-color: green;
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             border: none;
             cursor: pointer;
             border-radius: 10px;
+            z-index: 10;
             display: none;
         }
         .overlay {
-            position: absolute;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
@@ -58,22 +61,23 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            font-size: 20px;
+            font-size: 16px;
             text-align: center;
             display: none;
+            z-index: 10;
         }
         .score-guide {
-            border: 2px solid white;
-            padding: 20px;
-            border-radius: 15px;
+            border: 1px solid white;
+            padding: 10px;
+            border-radius: 10px;
             background: rgba(0, 0, 0, 0.7);
-            position: relative;
+            width: 80%;
         }
         .score-guide img {
-            width: 30px;
-            height: 30px;
+            width: 20px;
+            height: 20px;
             vertical-align: middle;
-            margin-left: 10px;
+            margin-left: 5px;
         }
         #orientationWarning {
             display: none;
@@ -85,19 +89,20 @@
             color: #333;
             padding: 20px;
             border-radius: 10px;
-            font-size: 24px;
+            font-size: 18px;
             text-align: center;
             z-index: 1000;
         }
         #gameOverMessage {
             position: absolute;
-            top: 20px;
+            top: 5%;
             left: 50%;
             transform: translateX(-50%);
             color: red;
-            font-size: 60px;
+            font-size: 48px;
             display: none;
             animation: fadeIn 1s ease-in-out;
+            z-index: 10;
         }
         @keyframes fadeIn {
             from {
@@ -150,7 +155,7 @@
     window.addEventListener("resize", checkOrientation);
     checkOrientation();
 
-    const scale = canvas.width / 1000;
+    const scale = Math.min(canvas.width, canvas.height) / 1000; // סקייל יחסית למסך
     let kate = {
         x: 50 * scale,
         y: canvas.height - 120 * scale,
@@ -226,10 +231,8 @@
         const isLobster = Math.random() < 0.1;
         const isPhone = Math.random() < 0.1 && !obstacles.some(obstacle => obstacle.isPhone);
 
-        // גבול תחתון לגובה הופעת הדגים (מעל כפתור הקפיצה)
-        const jumpButtonHeight = document.getElementById("jumpButton").getBoundingClientRect().top;
-        const minFishY = 50 * scale; // שמירה על מרחק מהתחתית
-        const maxFishY = jumpButtonHeight - kate.height * 1.5; // מתחת לקו העליון של הכפתור
+        const minFishY = 0.3 * canvas.height; // לא מאפשר הופעה באזור התחתון
+        const maxFishY = 0.8 * canvas.height; // אמצע המסך לגובה מעט נמוך יותר
 
         const phoneY = isPhone ? Math.random() * (canvas.height - 60 * scale) : -100;
         const fishY = Math.random() * (maxFishY - minFishY) + minFishY;
@@ -306,7 +309,7 @@
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = "black";
-        ctx.font = "24px Arial";
+        ctx.font = "18px Arial";
         ctx.fillText("Score: " + score, canvas.width / 2 - 50, 30);
 
         ctx.drawImage(surferImage, kate.x, kate.y, kate.width, kate.height);
