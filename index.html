@@ -155,21 +155,21 @@
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    function checkOrientation(showWarning = true) {
+    function checkOrientation() {
         const isPortrait = window.innerWidth < window.innerHeight;
-        if (isPortrait && showWarning) {
+        if (isPortrait && !gameStarted) {
             orientationWarning.style.display = "block";
         } else {
             orientationWarning.style.display = "none";
         }
     }
-    window.addEventListener("resize", () => checkOrientation());
+    window.addEventListener("resize", checkOrientation);
     checkOrientation();
 
     const baseScale = Math.min(window.innerWidth, window.innerHeight) < 600 ? 0.6 : 1;
-    const gravity = 0.15; 
-    const jumpForce = 5; 
-    const obstacleSpeed = window.innerWidth < 600 ? 1 : 1.5; // התאמת מהירות לניידים
+    const gravity = 0.15;
+    const jumpForce = 5;
+    const obstacleSpeed = window.innerWidth < 600 ? 0.5 : 1.2; // הורדת מהירות במסכי סלולר
 
     let kate = {
         x: 50 * baseScale,
@@ -218,6 +218,7 @@
 
     startButton.addEventListener("click", () => {
         startGame();
+        orientationWarning.style.display = "none";
     });
 
     jumpButton.addEventListener("mousedown", () => {
@@ -317,7 +318,6 @@
         overlay.style.display = 'flex';
         startButton.style.display = 'block';
         gameOverMessage.style.display = 'block';
-        checkOrientation(); 
     }
 
     function draw() {
@@ -356,7 +356,7 @@
         overlay.style.display = 'none';
         startButton.style.display = 'none';
         gameOverMessage.style.display = 'none';
-        checkOrientation(false);
+        resizeCanvas();
         gameLoop();
     }
 
