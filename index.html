@@ -155,15 +155,17 @@
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    const gravity = 0.15; 
-    const jumpForce = 5; 
-    const obstacleSpeed = 1.5; // מהירות אחידה לכל המסכים
+    const isMobile = window.innerWidth < 600;
+    const baseScale = isMobile ? 0.5 : 0.8; // שינוי קנה מידה לאובייקטים קטנים יותר במסך קטן
+    const gravity = 0.1; 
+    const jumpForce = isMobile ? 4 : 5; 
+    const obstacleSpeed = isMobile ? 0.5 : 1; // האטת מהירות במסך קטן
 
     let kate = {
         x: 50,
-        y: canvas.height - 250,
-        width: 80,
-        height: 80,
+        y: canvas.height - 250 * baseScale,
+        width: 80 * baseScale,
+        height: 80 * baseScale,
         dy: 0,
         isJumping: false
     };
@@ -234,16 +236,16 @@
 
         const jumpButtonTop = document.getElementById("jumpButton").getBoundingClientRect().top;
         const minFishY = 0.2 * canvas.height;
-        const maxFishY = jumpButtonTop - 120;
+        const maxFishY = jumpButtonTop - 120 * baseScale;
 
-        const phoneY = isPhone ? Math.random() * (canvas.height - 60) : -100;
+        const phoneY = isPhone ? Math.random() * (canvas.height - 60 * baseScale) : -100;
         const fishY = Math.random() * (maxFishY - minFishY) + minFishY;
 
         const obstacle = {
             x: canvas.width,
             y: isPhone ? phoneY : fishY,
-            width: 50,
-            height: 50,
+            width: 50 * baseScale,
+            height: 50 * baseScale,
             dx: obstacleSpeed,
             isLobster: isLobster,
             isPhone: isPhone,
@@ -338,7 +340,7 @@
         score = 0;
         obstacles = [];
         frameCount = 0;
-        kate.y = canvas.height - 250;
+        kate.y = canvas.height - 250 * baseScale;
         kate.dy = 0;
         gameStarted = true;
         overlay.style.display = 'none';
