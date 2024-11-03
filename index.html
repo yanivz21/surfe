@@ -147,25 +147,26 @@
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
 
-    function checkOrientation() {
-        if (window.innerWidth < window.innerHeight) {
+    function checkOrientation(showWarning = true) {
+        const isPortrait = window.innerWidth < window.innerHeight;
+        if (isPortrait && showWarning) {
             orientationWarning.style.display = "block";
         } else {
             orientationWarning.style.display = "none";
         }
     }
-    window.addEventListener("resize", checkOrientation);
+    window.addEventListener("resize", () => checkOrientation());
     checkOrientation();
 
-    const baseScale = Math.min(window.innerWidth, window.innerHeight) < 600 ? 0.6 : 1; // קביעת גודל סטנדרטי למחשב, התאמה לניידים
-    const gravity = 0.15; // כוח כבידה קבוע לכל המסכים
-    const jumpForce = 5; // כוח קפיצה קבוע
-    const obstacleSpeed = 2; // מהירות אובייקטים אחידה
+    const baseScale = Math.min(window.innerWidth, window.innerHeight) < 600 ? 0.6 : 1;
+    const gravity = 0.15; 
+    const jumpForce = 5; 
+    const obstacleSpeed = 1.5; 
 
     let kate = {
         x: 50 * baseScale,
-        y: canvas.height - 150 * baseScale,
-        width: 80 * baseScale, // הגדרות גודל אחידות למחשבים וניידים
+        y: canvas.height - 200 * baseScale,
+        width: 80 * baseScale,
         height: 80 * baseScale,
         dy: 0,
         isJumping: false
@@ -308,6 +309,7 @@
         overlay.style.display = 'flex';
         startButton.style.display = 'block';
         gameOverMessage.style.display = 'block';
+        checkOrientation(); // להחזיר המלצת סיבוב מסך אם בנייד
     }
 
     function draw() {
@@ -340,12 +342,13 @@
         score = 0;
         obstacles = [];
         frameCount = 0;
-        kate.y = canvas.height - 150 * baseScale;
+        kate.y = canvas.height - 200 * baseScale;
         kate.dy = 0;
         gameStarted = true;
         overlay.style.display = 'none';
         startButton.style.display = 'none';
         gameOverMessage.style.display = 'none';
+        checkOrientation(false); // מסתיר את ההמלצה לסובב מסך
         gameLoop();
     }
 
