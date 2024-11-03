@@ -157,15 +157,15 @@
     window.addEventListener("resize", checkOrientation);
     checkOrientation();
 
-    const baseScale = Math.min(window.innerWidth, window.innerHeight) / 600; // קביעת סקייל מתאים
+    const baseScale = Math.min(window.innerWidth, window.innerHeight) / 500; // סקייל קבוע כדי לשמור על גודל אחיד
     let kate = {
         x: 50 * baseScale,
-        y: canvas.height - 150 * baseScale, // מתאימים לגובה מסך
-        width: 100 * baseScale,
-        height: 100 * baseScale,
+        y: canvas.height - 200 * baseScale, // קביעת מיקום גבוה מעל כפתור הקפיצה
+        width: 120 * baseScale,
+        height: 120 * baseScale,
         dy: 0,
         gravity: 0.4 * baseScale,
-        jumpForce: 7 * baseScale,
+        jumpForce: 6 * baseScale,
         isJumping: false
     };
 
@@ -198,7 +198,7 @@
     let obstacles = [];
     let frameCount = 0;
     const spawnRate = 100;
-    let obstacleSpeed = 2 * baseScale; // מהירות מוגדלת יחסית
+    const obstacleSpeed = 3; // מהירות קבועה לכל המסכים
     let gameStarted = false;
 
     const jumpButton = document.getElementById("jumpButton");
@@ -233,8 +233,9 @@
         const isLobster = Math.random() < 0.1;
         const isPhone = Math.random() < 0.1 && !obstacles.some(obstacle => obstacle.isPhone);
 
-        const minFishY = 0.25 * canvas.height; // אובייקטים לא יופיעו נמוך מדי
-        const maxFishY = 0.75 * canvas.height; // מגבילים את הגובה לאמצע המסך העליון
+        const jumpButtonTop = document.getElementById("jumpButton").getBoundingClientRect().top;
+        const minFishY = 0.2 * canvas.height; // האובייקטים לא יופיעו נמוך מדי
+        const maxFishY = jumpButtonTop - 80 * baseScale; // מיקום האובייקטים מתחת לכפתור הקפיצה
 
         const phoneY = isPhone ? Math.random() * (canvas.height - 60 * baseScale) : -100;
         const fishY = Math.random() * (maxFishY - minFishY) + minFishY;
@@ -242,8 +243,8 @@
         const obstacle = {
             x: canvas.width,
             y: isPhone ? phoneY : fishY,
-            width: 50 * baseScale,
-            height: 50 * baseScale,
+            width: 60 * baseScale,
+            height: 60 * baseScale,
             dx: obstacleSpeed,
             isLobster: isLobster,
             isPhone: isPhone,
@@ -256,8 +257,8 @@
         kate.dy += kate.gravity;
         kate.y += kate.dy;
 
-        if (kate.y > canvas.height - kate.height) {
-            kate.y = canvas.height - kate.height;
+        if (kate.y > canvas.height - kate.height - 100 * baseScale) { // לוודא שהגולש לא עובר את גובה כפתור הקפיצה
+            kate.y = canvas.height - kate.height - 100 * baseScale;
             kate.isJumping = false;
         }
 
@@ -338,7 +339,7 @@
         score = 0;
         obstacles = [];
         frameCount = 0;
-        kate.y = canvas.height - 150 * baseScale; // דמות הגולש במקום הנכון
+        kate.y = canvas.height - 200 * baseScale; // מיקום הדמות כך שתתחיל מעל כפתור הקפיצה
         kate.dy = 0;
         gameStarted = true;
         overlay.style.display = 'none';
